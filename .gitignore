@@ -1,0 +1,16 @@
+# Terraform
+.terraform/
+*.tfstate*
+.terraform.lock.hcl
+terraform.tfvars
+
+# Script de bootstrap
+bootstrap_queueflow.sh
+
+# .NET build artifacts
+**/bin/
+**/obj/
+**/out/
+
+# Lambda packages
+*.zip
