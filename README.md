@@ -1,6 +1,32 @@
+<div align="center">
+
 # QueueFlow
 
-Cloud-native message queue application built on AWS, featuring a serverless REST API for message publishing and an ECS-based worker for asynchronous consumption.
+**Cloud-native message queue application built on AWS with serverless REST API and ECS-based async workers.**
+
+[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
+[![C#](https://img.shields.io/badge/C%23-12-239120?style=for-the-badge&logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
+[![AWS](https://img.shields.io/badge/AWS-Cloud-FF9900?style=for-the-badge&logo=amazonwebservices&logoColor=white)](https://aws.amazon.com/)
+[![Terraform](https://img.shields.io/badge/Terraform-%3E%3D1.6-7B42BC?style=for-the-badge&logo=terraform&logoColor=white)](https://www.terraform.io/)
+[![Docker](https://img.shields.io/badge/Docker-Container-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](#license)
+
+<br/>
+
+<img src="https://img.shields.io/badge/Lambda-Serverless-FF9900?logo=awslambda&logoColor=white" alt="Lambda" />
+<img src="https://img.shields.io/badge/API_Gateway-HTTP-FF4F8B?logo=amazonapigateway&logoColor=white" alt="API Gateway" />
+<img src="https://img.shields.io/badge/SNS-Pub%2FSub-FF4F8B?logo=amazonsqs&logoColor=white" alt="SNS" />
+<img src="https://img.shields.io/badge/SQS-Queue-FF4F8B?logo=amazonsqs&logoColor=white" alt="SQS" />
+<img src="https://img.shields.io/badge/ECS-Container-FF9900?logo=amazonecs&logoColor=white" alt="ECS" />
+<img src="https://img.shields.io/badge/CloudWatch-Logs-FF4F8B?logo=amazoncloudwatch&logoColor=white" alt="CloudWatch" />
+
+---
+
+[Architecture](#architecture) &bull; [Tech Stack](#tech-stack) &bull; [Getting Started](#getting-started) &bull; [API Reference](#api-endpoints) &bull; [Configuration](#configuration) &bull; [Cleanup](#cleanup)
+
+</div>
+
+<br/>
 
 ## Architecture
 
@@ -39,84 +65,52 @@ Cloud-native message queue application built on AWS, featuring a serverless REST
 
 ## Tech Stack
 
-| Layer          | Technology                          |
-|----------------|-------------------------------------|
-| Language       | C# / .NET 8.0                       |
-| API            | AWS Lambda + API Gateway v2 (HTTP)  |
-| Messaging      | AWS SNS + SQS                       |
-| Worker         | AWS ECS on EC2 (Docker)             |
-| Registry       | AWS ECR                             |
-| Networking     | AWS VPC (2 public subnets)          |
-| Observability  | AWS CloudWatch Logs                 |
-| IaC            | Terraform >= 1.6.0                  |
+| Layer | Technology |
+|:------|:-----------|
+| **Language** | C# 12 / .NET 8.0 |
+| **API** | AWS Lambda + API Gateway v2 (HTTP) |
+| **Messaging** | AWS SNS + SQS |
+| **Worker** | AWS ECS on EC2 (Docker) |
+| **Registry** | AWS ECR |
+| **Networking** | AWS VPC (2 public subnets) |
+| **Observability** | AWS CloudWatch Logs |
+| **IaC** | Terraform >= 1.6.0 |
 
 ## Project Structure
 
 ```
 queueflow/
 ├── src/
-│   ├── MessagingApiLambda/       # Serverless REST API
-│   │   ├── Function.cs           # Lambda handler (publish, enqueue, status)
+│   ├── MessagingApiLambda/           # Serverless REST API
+│   │   ├── Function.cs               # Lambda handler (publish, enqueue, status)
 │   │   └── MessagingApiLambda.csproj
-│   └── SqsWorker/                # Queue consumer service
-│       ├── Program.cs            # Long-polling worker loop
-│       ├── Dockerfile            # Multi-stage build (.NET 8)
+│   └── SqsWorker/                    # Queue consumer service
+│       ├── Program.cs                # Long-polling worker loop
+│       ├── Dockerfile                # Multi-stage build (.NET 8)
 │       └── SqsWorker.csproj
 ├── terraform/
-│   ├── main.tf                   # Root module composition
-│   ├── variables.tf              # Input variables
-│   ├── outputs.tf                # Exported values
-│   ├── terraform.tfvars.example  # Configuration template
+│   ├── main.tf                       # Root module composition
+│   ├── variables.tf                  # Input variables
+│   ├── outputs.tf                    # Exported values
+│   ├── terraform.tfvars.example      # Configuration template
 │   └── modules/
-│       ├── vpc/                  # VPC, subnets, internet gateway
-│       ├── ecr/                  # Container registry
-│       ├── messaging/            # SNS topic, SQS queue, subscription
-│       ├── api/                  # Lambda function, API Gateway, IAM
-│       ├── ecs_cluster/          # ECS cluster, ASG, capacity provider
-│       └── ecs_worker_service/   # Task definition, service, IAM
+│       ├── vpc/                      # VPC, subnets, internet gateway
+│       ├── ecr/                      # Container registry
+│       ├── messaging/                # SNS topic, SQS queue, subscription
+│       ├── api/                      # Lambda function, API Gateway, IAM
+│       ├── ecs_cluster/              # ECS cluster, ASG, capacity provider
+│       └── ecs_worker_service/       # Task definition, service, IAM
 └── queueflow.sln
 ```
 
-## API Endpoints
-
-### `GET /status`
-
-Health check.
-
-```json
-{ "ok": true, "service": "queueflow-messaging-api", "time": "2025-01-01T00:00:00Z" }
-```
-
-### `POST /publish`
-
-Publishes a message to the SNS topic, which fans out to the SQS queue via subscription.
-
-```json
-{
-  "message": "order.created",
-  "attributes": { "orderId": "12345" }
-}
-```
-
-### `POST /enqueue`
-
-Sends a message directly to the SQS queue.
-
-```json
-{
-  "message": "process.this",
-  "attributes": { "priority": "high" }
-}
-```
-
-Both return `{ "ok": true, "messageId": "..." }` on success.
-
 ## Prerequisites
 
-- [AWS CLI](https://aws.amazon.com/cli/) configured with valid credentials
-- [Terraform](https://www.terraform.io/) >= 1.6.0
-- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [Docker](https://www.docker.com/)
+| Tool | Version | Link |
+|:-----|:--------|:-----|
+| AWS CLI | v2+ | [Install](https://aws.amazon.com/cli/) |
+| Terraform | >= 1.6.0 | [Install](https://www.terraform.io/) |
+| .NET SDK | 8.0 | [Install](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| Docker | Latest | [Install](https://www.docker.com/) |
 
 ## Getting Started
 
@@ -162,7 +156,7 @@ API=$(cd terraform && terraform output -raw api_endpoint)
 # Health check
 curl -s "$API/status" | jq
 
-# Publish via SNS → SQS
+# Publish via SNS -> SQS
 curl -s -X POST "$API/publish" \
   -H "Content-Type: application/json" \
   -d '{"message": "hello from sns"}' | jq
@@ -179,32 +173,78 @@ Check worker logs:
 aws logs tail /ecs/queueflow-dev-worker --follow
 ```
 
+## API Endpoints
+
+### `GET /status`
+
+Health check endpoint.
+
+**Response:**
+
+```json
+{
+  "ok": true,
+  "service": "queueflow-messaging-api",
+  "time": "2025-01-01T00:00:00Z"
+}
+```
+
+### `POST /publish`
+
+Publishes a message to the SNS topic, which fans out to the SQS queue via subscription.
+
+**Request body:**
+
+```json
+{
+  "message": "order.created",
+  "attributes": { "orderId": "12345" }
+}
+```
+
+### `POST /enqueue`
+
+Sends a message directly to the SQS queue.
+
+**Request body:**
+
+```json
+{
+  "message": "process.this",
+  "attributes": { "priority": "high" }
+}
+```
+
+**Response (both endpoints):**
+
+```json
+{ "ok": true, "messageId": "..." }
+```
+
 ## Configuration
 
-| Variable           | Description                        | Default      |
-|--------------------|------------------------------------|--------------|
-| `project_name`     | Prefix for all AWS resources       | `queueflow`  |
-| `environment`      | Deployment environment             | `dev`        |
-| `aws_region`       | AWS region                         | `us-east-1`  |
-| `instance_type`    | EC2 instance type for ECS nodes    | `t3.micro`   |
-| `desired_capacity` | Number of ECS instances            | `3`          |
-| `lambda_zip_path`  | Path to the Lambda deployment zip  | `../src/...` |
+| Variable | Description | Default |
+|:---------|:-----------|:--------|
+| `project_name` | Prefix for all AWS resources | `queueflow` |
+| `environment` | Deployment environment | `dev` |
+| `aws_region` | AWS region | `us-east-1` |
+| `instance_type` | EC2 instance type for ECS nodes | `t3.micro` |
+| `desired_capacity` | Number of ECS instances | `3` |
+| `lambda_zip_path` | Path to the Lambda deployment zip | `../src/...` |
 
-See [`terraform/terraform.tfvars.example`](terraform/terraform.tfvars.example) for a complete template.
+> See [`terraform/terraform.tfvars.example`](terraform/terraform.tfvars.example) for a complete template.
 
 ## Terraform Outputs
 
-After `terraform apply`, the following outputs are available:
-
-| Output               | Description                         |
-|----------------------|-------------------------------------|
-| `api_endpoint`       | HTTP API Gateway base URL           |
-| `ecr_repository_url` | ECR repository for worker images    |
-| `sns_topic_arn`      | SNS topic ARN                       |
-| `sqs_queue_url`      | SQS queue URL                       |
-| `ecs_cluster_name`   | ECS cluster name                    |
-| `worker_service_name`| ECS worker service name             |
-| `worker_log_group`   | CloudWatch log group for the worker |
+| Output | Description |
+|:-------|:-----------|
+| `api_endpoint` | HTTP API Gateway base URL |
+| `ecr_repository_url` | ECR repository for worker images |
+| `sns_topic_arn` | SNS topic ARN |
+| `sqs_queue_url` | SQS queue URL |
+| `ecs_cluster_name` | ECS cluster name |
+| `worker_service_name` | ECS worker service name |
+| `worker_log_group` | CloudWatch log group for the worker |
 
 ## Cleanup
 
@@ -216,3 +256,11 @@ terraform destroy
 ## License
 
 This project is proprietary. All rights reserved.
+
+---
+
+<div align="center">
+
+Built with .NET, AWS and Terraform
+
+</div>
